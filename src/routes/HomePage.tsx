@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 
 export function HomePage() {
   const { session, status, signInEmail, signOut } = useAuth();
+  const bypassAuth = import.meta.env.VITE_DEV_BYPASS_AUTH !== "0";
   const signedIn = status === "authenticated";
 
   const userLabel = useMemo(() => {
@@ -28,7 +29,11 @@ export function HomePage() {
           </div>
 
           <div className="flex items-center gap-2">
-            {signedIn ? (
+            {bypassAuth ? (
+              <div className="rounded-md border border-zinc-800 px-3 py-1.5 text-xs text-zinc-400">
+                Auth disabled
+              </div>
+            ) : signedIn ? (
               <>
                 <div className="hidden text-xs text-zinc-400 md:block">{userLabel}</div>
                 <button
@@ -69,7 +74,7 @@ export function HomePage() {
         </div>
       </header>
 
-      {notice ? (
+      {!bypassAuth && notice ? (
         <div className="mx-auto mt-2 w-full max-w-[1400px] px-4 text-xs text-amber-300">{notice}</div>
       ) : null}
 

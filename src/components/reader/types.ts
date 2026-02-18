@@ -1,5 +1,13 @@
-export type BBox = { minX: number; minY: number; maxX: number; maxY: number };
+export type Point = { x: number; y: number };
+export type MultiPolygonGeometry = {
+  kind: "MULTI_POLYGON";
+  version: 1;
+  rings: Point[][];
+};
+export type Bounds = { minX: number; minY: number; maxX: number; maxY: number };
+
 export type BlockType = "TEXT" | "CODE" | "MATH";
+export type ReaderRenderMode = "reader" | "compare" | "mapping";
 
 export type ClientBlock = {
   id?: string; // DB id (available after upload+fetch)
@@ -7,7 +15,8 @@ export type ClientBlock = {
   pageNumber: number;
   orderInPage: number;
   globalOrder: number;
-  bbox: BBox;
+  geometry: MultiPolygonGeometry;
+  bounds?: Bounds;
   text: string;
   blockType: BlockType;
 };

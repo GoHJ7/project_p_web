@@ -22,6 +22,7 @@ openai.env
 # misc
 .DS_Store
 *.pem
+public/dev-default.pdf
 
 # editor/generated
 *.tsbuildinfo
