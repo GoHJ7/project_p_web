@@ -289,6 +289,27 @@ function looksStandaloneMetaLine(text: string): boolean {
   return false;
 }
 
+type BoundaryLineRole = "body" | "meta" | "contact" | "toc";
+
+function classifyBoundaryLineRole(text: string): BoundaryLineRole {
+  const t = text.trim();
+  if (t.length === 0) return "meta";
+  if (/^(?:https?:\/\/|www\.)/i.test(t) || /\b[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}\b/.test(t)) {
+    return "contact";
+  }
+  if (TOC_DOT_LEADER_RE.test(t) || TOC_TRAILING_PAGE_RE.test(t) || TOC_HINT_RE.test(t)) {
+    return "toc";
+  }
+
+  // Short standalone lines are usually metadata/address/publisher lines.
+  if (looksStandaloneMetaLine(t)) return "meta";
+  // Typical body lines are longer and sentence-like.
+  if ((endsLikeSentence(t) && t.length >= 34) || (/[,:;]/.test(t) && t.length >= 64)) {
+    return "body";
+  }
+  return "meta";
+}
+
 function shouldForceParagraphBreakByBoundary(params: {
   prevText: string;
   nextText: string;
@@ -302,6 +323,14 @@ function shouldForceParagraphBreakByBoundary(params: {
   if (prev.length === 0 || next.length === 0) return false;
   const prevLooksStandalone = looksStandaloneMetaLine(prev);
   const nextLooksStandalone = looksStandaloneMetaLine(next);
+  const prevRole = classifyBoundaryLineRole(prev);
+  const nextRole = classifyBoundaryLineRole(next);
+
+  // Role transition is a strong paragraph boundary signal.
+  if (prevRole !== nextRole) {
+    if (prevRole === "body" || nextRole === "body") return true;
+    if (params.baseGap >= FLOW_LINE_GAP_PX) return true;
+  }
 
   // Meta/header line followed by body-like text should start a new paragraph
   // even when the previous line does not end with sentence punctuation.
@@ -1224,6 +1253,9 @@ export const TranslatedPdfPane = forwardRef<TranslatedPdfPaneHandle, Props>(
                                 : paragraphKind === "list"
                                   ? paragraphLineHeightBase + 0.01
                                   : paragraphLineHeightBase;
+                          const paragraphLineHeightForRender = mappingMode
+                            ? paragraphLineHeight + 0.18
+                            : paragraphLineHeight;
                           const paragraphFontSizeBase = clamp(
                             paragraph.segments.reduce((sum, s) => sum + s.fontSize, 0) /
                               Math.max(1, paragraph.segments.length),
@@ -1278,7 +1310,7 @@ export const TranslatedPdfPane = forwardRef<TranslatedPdfPaneHandle, Props>(
                                 marginLeft: `${marginLeftPercent}%`,
                                 maxWidth: `${maxWidthPercent}%`,
                                 fontSize: paragraphFontSize,
-                                lineHeight: paragraphLineHeight,
+                                lineHeight: paragraphLineHeightForRender,
                                 fontFamily: paragraphFontFamily,
                               }}
                             >
@@ -1325,7 +1357,7 @@ export const TranslatedPdfPane = forwardRef<TranslatedPdfPaneHandle, Props>(
                                     >
                                       {mappingMode ? (
                                         <span
-                                          className="pointer-events-none absolute left-0 z-10 rounded px-1 py-[1px] align-middle text-[9px] font-mono leading-none text-white"
+                                          className="pointer-events-none absolute left-0 z-10 rounded px-1 py-[1px] align-middle text-[8px] font-mono leading-none text-white"
                                           style={{
                                             backgroundColor: debugStroke,
                                             transform: "translateY(calc(-100% - 2px))",
