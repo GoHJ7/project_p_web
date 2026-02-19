@@ -274,6 +274,9 @@ function looksStandaloneMetaLine(text: string): boolean {
   const t = text.trim();
   if (t.length === 0) return false;
   if (/^(?:https?:\/\/|www\.)/i.test(t)) return true;
+  // Copyright header lines are frequently single-line meta blocks that should
+  // not be merged with following body paragraphs.
+  if (/\bcopyright\b/i.test(t) && /(?:©|\(c\)|\b\d{4}\b)/i.test(t)) return true;
 
   const words = t.split(/\s+/).filter(Boolean);
   const hasSentenceEnd = endsLikeSentence(t);
@@ -297,10 +300,23 @@ function shouldForceParagraphBreakByBoundary(params: {
   const prev = params.prevText.trim();
   const next = params.nextText.trim();
   if (prev.length === 0 || next.length === 0) return false;
+  const prevLooksStandalone = looksStandaloneMetaLine(prev);
+  const nextLooksStandalone = looksStandaloneMetaLine(next);
+
+  // Meta/header line followed by body-like text should start a new paragraph
+  // even when the previous line does not end with sentence punctuation.
+  if (prevLooksStandalone && !nextLooksStandalone) {
+    const nextLooksBodyLike =
+      next.length >= 28 ||
+      /[.!?。！？]/.test(next) ||
+      /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,}/.test(next);
+    if (nextLooksBodyLike) return true;
+  }
+
   if (!endsLikeSentence(prev)) return false;
 
-  const nextLooksStandalone =
-    looksStandaloneMetaLine(next) ||
+  const nextLooksStandaloneAfterSentence =
+    nextLooksStandalone ||
     LIST_OR_HEADING_START_RE.test(next) ||
     TOC_DOT_LEADER_RE.test(next) ||
     TOC_TRAILING_PAGE_RE.test(next);
@@ -313,7 +329,7 @@ function shouldForceParagraphBreakByBoundary(params: {
 
   const gapBreak = params.baseGap >= FLOW_LINE_GAP_PX + 1;
 
-  return nextLooksStandalone || widthDropBreak || gapBreak;
+  return nextLooksStandaloneAfterSentence || widthDropBreak || gapBreak;
 }
 
 function classifyParagraphKind(text: string, segments: FlowSegment[]): ParagraphKind {
