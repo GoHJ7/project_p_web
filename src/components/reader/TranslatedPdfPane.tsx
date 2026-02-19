@@ -1319,12 +1319,19 @@ export const TranslatedPdfPane = forwardRef<TranslatedPdfPaneHandle, Props>(
                                         : "#555";
 
                                   return (
-                                    <span key={seg.anchorId}>
+                                    <span
+                                      key={seg.anchorId}
+                                      className={mappingMode ? "relative inline" : undefined}
+                                    >
                                       {mappingMode ? (
                                         <span
-                                          className="mr-1 inline-block rounded px-1 py-[1px] align-middle text-[9px] font-mono leading-none text-white"
-                                          style={{ backgroundColor: debugStroke }}
+                                          className="pointer-events-none absolute left-0 z-10 rounded px-1 py-[1px] align-middle text-[9px] font-mono leading-none text-white"
+                                          style={{
+                                            backgroundColor: debugStroke,
+                                            transform: "translateY(calc(-100% - 2px))",
+                                          }}
                                           title={seg.anchorId}
+                                          aria-hidden="true"
                                         >
                                           {seg.anchorId}
                                         </span>
