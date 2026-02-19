@@ -23,6 +23,8 @@ export type PdfPaneHandle = {
 type PdfPaneProps = {
   pdfData: ArrayBuffer | null;
   blocks: ClientBlock[];
+  docKeyOverride?: string | null;
+  pageCountOverride?: number | null;
   activeAnchorId: string | null;
   hoverAnchorId?: string | null;
   onAnchorHoverChange?: (anchorId: string | null) => void;
@@ -57,6 +59,8 @@ export const PdfPane = forwardRef<PdfPaneHandle, PdfPaneProps>(function PdfPane(
   {
     pdfData,
     blocks,
+    docKeyOverride = null,
+    pageCountOverride = null,
     activeAnchorId,
     hoverAnchorId = null,
     onAnchorHoverChange,
@@ -247,7 +251,8 @@ export const PdfPane = forwardRef<PdfPaneHandle, PdfPaneProps>(function PdfPane(
       raf = requestAnimationFrame(() => {
         const viewportTop = el.scrollTop;
         const viewportBottom = viewportTop + el.clientHeight;
-        const viewportCenter = viewportTop + el.clientHeight / 2;
+        const viewportAnchorTarget =
+          viewportTop + Math.min(180, Math.max(48, el.clientHeight * 0.26));
 
         const visible: string[] = [];
         let primary: { anchorId: string; dist: number } | null = null;
@@ -258,7 +263,7 @@ export const PdfPane = forwardRef<PdfPaneHandle, PdfPaneProps>(function PdfPane(
           visible.push(layout.anchorId);
 
           const center = (layout.top + layout.bottom) / 2;
-          const dist = Math.abs(center - viewportCenter);
+          const dist = Math.abs(center - viewportAnchorTarget);
           if (!primary || dist < primary.dist) {
             primary = { anchorId: layout.anchorId, dist };
           }
@@ -292,10 +297,10 @@ export const PdfPane = forwardRef<PdfPaneHandle, PdfPaneProps>(function PdfPane(
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-zinc-800 px-3 py-2">
         <div className="text-xs text-zinc-400">
-          {docKey ? `docKey ${docKey}` : "No PDF loaded"}
+          {(docKeyOverride || docKey) ? `docKey ${docKeyOverride || docKey}` : "No PDF loaded"}
         </div>
         <div className="text-xs text-zinc-400">
-          {pageCount ? `${pageCount} pages` : ""}
+          {(pageCountOverride || pageCount) ? `${pageCountOverride || pageCount} pages` : ""}
         </div>
       </div>
 

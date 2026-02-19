@@ -10,7 +10,12 @@ import {
 } from "@/components/reader/TranslatedPdfPane";
 import { GlossaryDrawer } from "@/components/reader/GlossaryDrawer";
 import { anchorStrokeColor } from "@/components/reader/mappingColor";
-import type { ClientBlock, ProviderId, ReaderRenderMode } from "@/components/reader/types";
+import type {
+  ClientBlock,
+  ClientImageUnit,
+  ProviderId,
+  ReaderRenderMode,
+} from "@/components/reader/types";
 import { useAuth } from "@/lib/auth";
 
 type Extracted = {
@@ -18,6 +23,7 @@ type Extracted = {
   pageCount: number;
   pages: { pageNumber: number; width: number; height: number }[];
   blocks: ClientBlock[];
+  imageUnits: ClientImageUnit[];
 };
 
 type PreprocessProgress = {
@@ -49,6 +55,7 @@ type PreprocessDonePayload = {
     text: string;
     blockType: ClientBlock["blockType"];
   }>;
+  imageUnits?: ClientImageUnit[];
 };
 
 type MappingLine = {
@@ -315,6 +322,7 @@ export function Reader() {
         pageCount: result.pageCount,
         pages: result.pages,
         blocks: result.blocks,
+        imageUnits: result.imageUnits ?? [],
       });
       setBlocks(result.blocks);
       setActiveAnchorId(result.blocks[0]?.anchorId ?? null);
@@ -1037,6 +1045,8 @@ export function Reader() {
               ref={pdfRef}
               pdfData={pdfData}
               blocks={blocks}
+              docKeyOverride={extracted?.docKey ?? null}
+              pageCountOverride={extracted?.pageCount ?? null}
               activeAnchorId={activeAnchorId}
               hoverAnchorId={hoverAnchorId}
               onAnchorHoverChange={setHoverAnchorId}
@@ -1051,7 +1061,9 @@ export function Reader() {
           >
             <TranslatedPdfPane
               ref={trPdfRef}
+              pdfData={pdfData}
               blocks={blocks}
+              imageUnits={extracted?.imageUnits ?? []}
               translations={translations}
               translationFailures={translationFailures}
               pendingAnchorIds={pendingAnchorIds}

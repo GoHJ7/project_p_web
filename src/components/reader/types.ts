@@ -22,3 +22,10 @@ export type ClientBlock = {
 };
 
 export type ProviderId = "openai" | "gemini" | "claude";
+
+export type ClientImageUnit = {
+  unitId: string;
+  pageNumber: number;
+  kind: "IMAGE";
+  bbox: Bounds;
+};
